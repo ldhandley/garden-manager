@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Garden, Plant, PlantFormData } from './types';
 import GardenView from './components/GardenView';
 import PlantForm from './components/PlantForm';
+import ImageUpload from './components/ImageUpload';
 import { Upload, Leaf } from 'lucide-react';
 import styles from './App.module.css';
 
@@ -16,6 +17,8 @@ const mockGarden: Garden = {
 };
 
 function App() {
+  const [gardens, setGardens] = useState<Garden[]>([mockGarden]);
+  const [selectedGardenId, setSelectedGardenId] = useState<string>('1');
   const [plants, setPlants] = useState<Plant[]>([
     {
       id: '1',
@@ -61,8 +64,11 @@ function App() {
     },
   ]);
   const [showPlantForm, setShowPlantForm] = useState(false);
+  const [showImageUpload, setShowImageUpload] = useState(false);
   const [pendingPin, setPendingPin] = useState<{ x: number; y: number } | null>(null);
-  const [selectedGarden] = useState<Garden>(mockGarden);
+  
+  const selectedGarden = gardens.find(g => g.id === selectedGardenId) || gardens[0];
+  const currentPlants = plants.filter(p => p.gardenId === selectedGardenId);
 
   const handleAddPin = (x: number, y: number) => {
     setPendingPin({ x, y });
@@ -91,6 +97,22 @@ function App() {
     setPendingPin(null);
   };
 
+  const handleImageUpload = (gardenData: Omit<Garden, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newGarden: Garden = {
+      id: Date.now().toString(),
+      ...gardenData,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setGardens(prev => [...prev, newGarden]);
+    setSelectedGardenId(newGarden.id);
+    setShowImageUpload(false);
+  };
+
+  const handleUploadCancel = () => {
+    setShowImageUpload(false);
+  };
+
   return (
     <div className={styles.app}>
       <header className={styles.header}>
@@ -100,7 +122,10 @@ function App() {
               <Leaf className={styles.headerIcon} />
               <h1 className={styles.headerTitle}>Garden Manager</h1>
             </div>
-            <button className={styles.uploadButton}>
+            <button 
+              className={styles.uploadButton}
+              onClick={() => setShowImageUpload(true)}
+            >
               <Upload size={16} />
               <span>Upload Garden</span>
             </button>
@@ -113,7 +138,7 @@ function App() {
           <h2 className={styles.gardenTitle}>{selectedGarden.name}</h2>
           <p className={styles.gardenDescription}>{selectedGarden.description}</p>
           <div className={styles.gardenStats}>
-            <span>Plants: {plants.length}</span>
+            <span>Plants: {currentPlants.length}</span>
             <span>•</span>
             <span>Click on the image to add plants</span>
           </div>
@@ -122,16 +147,16 @@ function App() {
         <div className={styles.gardenContainer}>
           <GardenView
             garden={selectedGarden}
-            plants={plants}
+            plants={currentPlants}
             onAddPin={handleAddPin}
           />
         </div>
 
-        {plants.length > 0 && (
+        {currentPlants.length > 0 && (
           <div className={styles.plantsSection}>
             <h3 className={styles.plantsTitle}>Plants in this garden</h3>
             <div className={styles.plantsGrid}>
-              {plants.map((plant) => (
+              {currentPlants.map((plant) => (
                 <div key={plant.id} className={styles.plantCard}>
                   <h4 className={styles.plantName}>{plant.name}</h4>
                   <p className={styles.plantSpecies}>{plant.species} {plant.variety && `- ${plant.variety}`}</p>
@@ -153,6 +178,13 @@ function App() {
         <PlantForm
           onSubmit={handlePlantSubmit}
           onCancel={handleFormCancel}
+        />
+      )}
+      
+      {showImageUpload && (
+        <ImageUpload
+          onSubmit={handleImageUpload}
+          onCancel={handleUploadCancel}
         />
       )}
     </div>
