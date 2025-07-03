@@ -1,3 +1,8 @@
+# Garden Manager
+
+An app that allows you to upload an image of a garden and mark it up with pins that identify plants by name, species, date you planted it, etc. 
+
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
